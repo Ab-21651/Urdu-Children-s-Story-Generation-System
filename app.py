@@ -16,6 +16,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from tokenizer_utils import BPETokenizer, TrigramLM, load_model_from_json
@@ -81,6 +82,12 @@ class GenerateResponse(BaseModel):
 
 @app.get("/")
 def root():
+    """Serve the frontend UI."""
+    return FileResponse(BASE_DIR / "index.html", media_type="text/html")
+
+
+@app.get("/health")
+def health():
     """Health-check / info endpoint."""
     return {
         "service": "Urdu Story Generator",

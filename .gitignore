@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Backups
+index_backup.html
+
+# Data files (too large / not needed for deployment)
+rekhta_children_stories_ur_clean.csv
+rekhta_children_stories_ur_clean.jsonl
+rekhta_children_stories_ur_token_stream.txt
+
+# Notebooks
+code.ipynb
+.ipynb_checkpoints/
+
+# Misc
+chatgpt.html
+generate_qa_pdf.py
+frontend-phase5/
+
+# OS
+.DS_Store
+Thumbs.db

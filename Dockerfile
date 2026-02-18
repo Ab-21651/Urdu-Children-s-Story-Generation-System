@@ -19,6 +19,7 @@ COPY tokenizer_utils.py .
 COPY app.py .
 COPY model/ model/
 COPY tokenizer/ tokenizer/
+COPY index.html .
 
 # Expose the API port
 EXPOSE 8000

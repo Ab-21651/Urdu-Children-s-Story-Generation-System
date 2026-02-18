@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اردو کہانیوں کا جنریٹر</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c1: #191D23;
+            --c2: #57707A;
+            --c3: #7E919F;
+            --c4: #979DAB;
+            --c5: #C5BAC4;
+            --c6: #DEDCDC;
+            --c7: #DEDCDC;
+            --accent: #57707A;
+            --accent-hover: #3d545e;
+            --accent-glow: rgba(87,112,122,0.3);
+            --c2-dark: #3d545e;
+            --c3-dark: #5e7585;
+            --c4-dark: #78808e;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        html, body, #root {
+            height: 100%;
+            background: var(--c1);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ══════════════════════════
+           LAYOUT
+        ══════════════════════════ */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* ══════════════════════════
+           HEADER
+        ══════════════════════════ */
+        .header {
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(45,66,89,0.5);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            direction: ltr;
+        }
+
+        .header-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--c3);
+            border: 1px solid var(--c4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .header-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--c7);
+        }
+
+        .header-sub {
+            font-size: 0.65rem;
+            color: var(--c5);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .header-btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid var(--c4);
+            background: transparent;
+            color: var(--c5);
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .header-btn:hover { background: var(--c3-dark); color: #fff; }
+
+        /* ══════════════════════════
+           SETTINGS BAR
+        ══════════════════════════ */
+        .settings-bar {
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border-bottom: 1px solid rgba(45,66,89,0.3);
+            flex-wrap: wrap;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            direction: ltr;
+        }
+
+        .setting-lbl {
+            font-size: 0.68rem;
+            color: var(--c5);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .setting-val {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(124,107,240,0.1);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 4px;
+            background: var(--c3);
+            border-radius: 99px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent-glow);
+            cursor: pointer;
+        }
+
+        input[type="range"]:disabled { opacity: 0.3; }
+
+        /* ══════════════════════════
+           MESSAGES AREA
+        ══════════════════════════ */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            scroll-behavior: smooth;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--c3);
+            border: 1px solid var(--c4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .empty-title {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.2rem;
+            color: var(--c7);
+            font-weight: 600;
+        }
+
+        .empty-hint {
+            font-size: 0.8rem;
+            color: var(--c5);
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        .prompt-chips {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .prompt-chip {
+            padding: 0.55rem 1.1rem;
+            border-radius: 22px;
+            border: 1px solid var(--c4);
+            background: var(--c3);
+            color: var(--c6);
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .prompt-chip:hover {
+            background: var(--accent-hover);
+            color: #fff;
+            border-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        /* ── Messages ── */
+        .message {
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        .message.user { align-items: flex-end; }
+        .message.assistant { align-items: flex-start; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+            padding: 0 0.2rem;
+        }
+
+        .message.user .msg-label { color: var(--accent); }
+        .message.assistant .msg-label { color: var(--accent-hover); }
+
+        .bubble {
+            padding: 0.9rem 1.15rem;
+            border-radius: 16px;
+            line-height: 1.85;
+            max-width: 75%;
+            position: relative;
+        }
+
+        .message.user .bubble {
+            background: var(--c3);
+            color: var(--c7);
+            border: 1px solid var(--c4);
+            border-top-right-radius: 4px;
+        }
+
+        .message.assistant .bubble {
+            background: var(--c2);
+            color: var(--c7);
+            border: 1px solid rgba(45,66,89,0.5);
+            border-top-left-radius: 4px;
+        }
+
+        .bubble-text {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .cursor-blink {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--accent);
+            margin-right: 4px;
+            vertical-align: text-bottom;
+            animation: blink 0.7s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%,100% { opacity:1; }
+            50% { opacity:0; }
+        }
+
+        /* Thinking dots */
+        .thinking { display: flex; gap: 5px; align-items: center; padding: 0.2rem 0; }
+
+        .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: dp 1.4s ease-in-out infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dp {
+            0%,60%,100% { opacity: 0.25; transform: scale(0.8); }
+            30% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* ══════════════════════════
+           INPUT AREA
+        ══════════════════════════ */
+        .input-area {
+            padding: 0.8rem 1.5rem 1.2rem;
+            background: linear-gradient(to top, var(--c1) 80%, transparent);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.65rem;
+        }
+
+        .input-box {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            background: var(--c2);
+            border: 2px solid var(--c4);
+            border-radius: 28px;
+            padding: 0.55rem 1.2rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-box:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        textarea {
+            flex: 1;
+            min-height: 24px;
+            max-height: 120px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--c7);
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 0.92rem;
+            resize: none;
+            line-height: 1.6;
+            padding: 0.15rem 0;
+        }
+
+        textarea::placeholder {
+            color: var(--c5);
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        textarea:disabled { opacity: 0.35; }
+
+        .send-btn {
+            height: 44px;
+            padding: 0 1.4rem;
+            border-radius: 22px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        .send-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+        .send-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+
+        .error-bar {
+            font-size: 0.78rem;
+            color: #f08080;
+            background: rgba(240,128,128,0.08);
+            border: 1px solid rgba(240,128,128,0.2);
+            border-radius: 12px;
+            padding: 0.55rem 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .input-hint {
+            font-size: 0.62rem;
+            color: var(--c5);
+            opacity: 0.5;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--c4); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c5); }
+
+        @media (max-width: 600px) {
+            .app-container { max-width: 100%; }
+            .messages-area { padding: 1rem; }
+            .input-area { padding: 0.5rem 0.8rem 1rem; }
+            .bubble { max-width: 90%; }
+            .settings-bar { gap: 0.8rem; padding: 0.6rem 1rem; }
+            input[type="range"] { width: 70px; }
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : (window.BACKEND_URL || window.location.origin);
+
+async function generateStory({ prompt, temperature, max_tokens, onToken }) {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/generate`, {
+            prompt, temperature, max_tokens
+        });
+        const text = response.data.generated_text || response.data.story || '';
+        const words = text.split(' ');
+        for (const word of words) {
+            onToken(word + ' ');
+            await new Promise(r => setTimeout(r, 40));
+        }
+        return { success: true };
+    } catch (error) {
+        if (error.code === 'ERR_NETWORK')
+            throw new Error('Cannot connect to API at localhost:8000');
+        throw new Error(error.response?.data?.detail || error.message || 'Generation failed');
+    }
+}
+
+function Message({ role, content, isStreaming }) {
+    return (
+        <div className={`message ${role}`}>
+            <div className="msg-label">{role === 'user' ? 'You' : 'AI'}</div>
+            <div className="bubble">
+                <div className="bubble-text">
+                    {content}
+                    {isStreaming && <span className="cursor-blink" />}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function App() {
+    const [messages, setMessages]       = useState([]);
+    const [input, setInput]             = useState('');
+    const [loading, setLoading]         = useState(false);
+    const [error, setError]             = useState('');
+    const [temperature, setTemperature] = useState(0.8);
+    const [maxTokens, setMaxTokens]     = useState(250);
+    const endRef = useRef(null);
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSend = async (e) => {
+        e?.preventDefault();
+        if (!input.trim() || loading) return;
+        setError('');
+        const userMessage = input.trim();
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+        setLoading(true);
+        try {
+            let text = '';
+            await generateStory({
+                prompt: userMessage, temperature, max_tokens: maxTokens,
+                onToken: (token) => {
+                    text += token;
+                    setMessages(prev => {
+                        const updated = [...prev];
+                        const last = updated[updated.length - 1];
+                        if (last?.role === 'assistant') last.content = text;
+                        else updated.push({ role: 'assistant', content: text });
+                        return [...updated];
+                    });
+                }
+            });
+        } catch (err) {
+            setError(err.message);
+            setMessages(prev => [...prev, { role: 'assistant', content: '\u274C ' + err.message }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleClear = () => { setMessages([]); setError(''); setInput(''); };
+
+    const handleCopy = () => {
+        const last = [...messages].reverse().find(m => m.role === 'assistant');
+        if (last) { navigator.clipboard.writeText(last.content); }
+    };
+
+    const isThinking  = loading && messages.at(-1)?.role === 'user';
+    const isStreaming  = loading && messages.at(-1)?.role === 'assistant';
+
+    return (
+        <div className="app-container">
+            {/* HEADER */}
+            <div className="header">
+                <div className="header-brand">
+                    <div className="header-icon">{'\uD83D\uDCDC'}</div>
+                    <div>
+                        <div className="header-title">Urdu Story Generator</div>
+                        <div className="header-sub">Trigram LM + BPE</div>
+                    </div>
+                </div>
+                <div className="header-actions">
+                    <button className="header-btn" onClick={handleCopy}>{'\uD83D\uDCCB'} Copy</button>
+                    <button className="header-btn" onClick={handleClear}>{'\uD83D\uDDD1'} Clear</button>
+                </div>
+            </div>
+
+
+
+            {/* MESSAGES */}
+            <div className="messages-area">
+                {messages.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-icon">{'\uD83D\uDCDC'}</div>
+                        <div className="empty-title">{'\u0627\u067E\u0646\u06CC \u06A9\u06C1\u0627\u0646\u06CC \u0634\u0631\u0648\u0639 \u06A9\u0631\u06CC\u06BA'}</div>
+                        <div className="empty-hint">
+                            Type a starting phrase in Urdu and let the AI continue the story...
+                        </div>
+                        <div className="prompt-chips">
+                            {[
+                                '\u0627\u06CC\u06A9 \u062F\u0646 \u062C\u0628 \u0633\u0648\u0631\u062C \u0688\u06BE\u0644 \u0631\u06C1\u0627 \u062A\u06BE\u0627',
+                                '\u067E\u06C1\u0627\u0691\u0648\u06BA \u06A9\u06CC \u0686\u0648\u0679\u06CC \u067E\u0631 \u0627\u06CC\u06A9 \u0628\u0648\u0691\u06BE\u0627',
+                                '\u0633\u0645\u0646\u062F\u0631 \u06A9\u06D2 \u06A9\u0646\u0627\u0631\u06D2 \u0627\u06CC\u06A9 \u0628\u0686\u06C1',
+                            ].map((p, i) => (
+                                <button key={i} className="prompt-chip"
+                                    onClick={() => setInput(p)}>
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    messages.map((msg, i) => (
+                        <Message key={i} role={msg.role} content={msg.content}
+                            isStreaming={isStreaming && i === messages.length - 1} />
+                    ))
+                )}
+
+                {isThinking && (
+                    <div className="message assistant">
+                        <div className="msg-label">AI</div>
+                        <div className="bubble">
+                            <div className="thinking">
+                                <div className="dot"></div><div className="dot"></div><div className="dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={endRef} />
+            </div>
+
+            {/* INPUT */}
+            <div className="input-area">
+                {error && <div className="error-bar">{error}</div>}
+                <div className="input-row">
+                    <div className="input-box">
+                        <textarea
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            disabled={loading}
+                            placeholder="Type a message to start a story..."
+                            rows={1}
+                        />
+                    </div>
+                    <button className="send-btn"
+                        disabled={loading || !input.trim()}
+                        onClick={handleSend}>
+                        {loading ? '\u23F3' : '\u2708 Send'}
+                    </button>
+                </div>
+                <div className="input-hint">Press Enter to send \u00B7 Shift+Enter for new line</div>
+            </div>
+        </div>
+    );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
