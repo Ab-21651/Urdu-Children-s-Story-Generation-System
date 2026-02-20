@@ -1,4 +1,6 @@
-## 📌 Project Overview
+# 📌 Urdu Children's Story Generation AI App
+
+## 📖 Project Overview
 
 This project implements a fully functional **Urdu Story Generation AI App** using classical probabilistic language modeling techniques.
 
@@ -9,7 +11,8 @@ Unlike modern LLM-based systems, this solution is built using:
 - FastAPI microservice backend  
 - Containerization using Docker  
 - CI/CD via GitHub Actions  
-- Web-based frontend deployed on Vercel  
+- Web-based frontend  
+- Deployment using Railway  
 
 The system generates short Urdu children's stories based on a user-provided starting phrase.
 
@@ -22,29 +25,76 @@ The project is divided into structured phases to bridge classical NLP techniques
 The system performs the following:
 
 - Scrapes and preprocesses real-world Urdu stories  
-- Trains a custom BPE tokenizer  
-- Implements a Trigram Language Model  
-- Serves inference via containerized microservice  
+- Trains a custom BPE tokenizer (vocab size = 250)  
+- Implements a Trigram Language Model with interpolation smoothing  
+- Serves inference via containerized FastAPI microservice  
 - Provides a ChatGPT-like web interface  
-- Deploys frontend to Vercel  
+- Deploys backend using Railway  
 
 ---
 
-## 🏗 System Architecture
-
-User (Frontend - Vercel)
+User (Frontend)
 ↓
+
 FastAPI Backend (Docker Container)
 ↓
+
 Tokenizer + Trigram Model
 ↓
+
 Generated Urdu Story
 
 
 ---
 
+## ⚙️ Tech Stack
+
+- Python 3.10+
+- FastAPI
+- Uvicorn
+- Docker
+- GitHub Actions
+- Railway (Deployment)
+
+---
+
+## Install Dependencies
+pip install -r requirements.txt
+
+## Run FastAPI Server
+py -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+## Open in Browser
+
+Then open:
+
+http://localhost:8000
+
+---
+
+## 📦 Model Components
+
+Custom BPE tokenizer (trained from scratch)
+
+Trigram Language Model (MLE + Interpolation)
+
+Special tokens: <EOS>, <EOP>, <EOT>
+
+Temperature-controlled generation
+
+JSON-serialized trained model for inference serving
+
+---
+
 ## 👥 Contributors
 
-- Minahil Rizwan  
-- Talha Akram  
-- Abdullah Attique  
+Minahil Rizwan
+
+Talha Akram
+
+Abdullah Attique
+
+
+
+
+## 🏗 System Architecture
